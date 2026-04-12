@@ -13,6 +13,7 @@ import io.cucumber.java.en.And;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 
+import java.nio.file.Paths;
 import java.util.regex.Pattern;
 
 import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat;
@@ -56,6 +57,12 @@ public class NaukriProfileSteps {
     // 🔹 Login button inside login form (submit button)
     @When("I click the login button")
     public void clickLoginButton() {
+
+        if (System.getenv("CI") != null) {
+            System.out.println("⚠ Skipping login click in CI");
+            return;
+        }
+
         try {
             Locator loginBtn = page.locator("button[type='submit']");
             loginBtn.waitFor();
@@ -91,6 +98,12 @@ public class NaukriProfileSteps {
 
     @When("I enter valid credentials")
     public void enterValidCredentials() {
+
+        if (System.getenv("CI") != null) {
+            System.out.println("Skipping login in CI (using saved session)");
+            return;
+        }
+
         String username = configReader.getUsername();
         String password = configReader.getPassword();
 
@@ -107,8 +120,16 @@ public class NaukriProfileSteps {
 
             assertThat(page)
                     .hasURL(Pattern.compile(".*/mnjuser/homepage"));
-
             System.out.println("✓ Redirected to dashboard");
+
+            // SAVE SESSION (ONLY LOCAL)
+            if (System.getenv("CI") == null) {
+                page.context().storageState(
+                        new BrowserContext.StorageStateOptions()
+                                .setPath(Paths.get("auth.json"))
+                );
+                System.out.println("✓ Session saved to auth.json");
+            }
         } catch (Exception e) {
             System.out.println("✗ Error verifying redirect: " + e.getMessage());
             throw e;

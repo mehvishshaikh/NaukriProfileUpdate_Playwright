@@ -3,6 +3,7 @@ package utils;
 import com.microsoft.playwright.*;
 import config.ConfigReader;
 
+import java.nio.file.Paths;
 import java.util.Arrays;
 
 public class BrowserManager {
@@ -43,14 +44,18 @@ public class BrowserManager {
 
         browser = playwright.chromium().launch(launchOptions);
 
-        context = browser.newContext(
-                new Browser.NewContextOptions()
-                        .setViewportSize(1920, 1080)
-                        .setUserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/146.0.0.0 Safari/537.36")
-        );
+        Browser.NewContextOptions contextOptions = new Browser.NewContextOptions()
+                .setViewportSize(1920, 1080)
+                .setUserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/146.0.0.0 Safari/537.36");
+
+        // 🔥 IMPORTANT: Use saved session in CI
+        if (isCI) {
+            contextOptions.setStorageStatePath(Paths.get("auth.json"));
+        }
+
+        context = browser.newContext(contextOptions);
 
         page = context.newPage();
-
         return page;
     }
 
