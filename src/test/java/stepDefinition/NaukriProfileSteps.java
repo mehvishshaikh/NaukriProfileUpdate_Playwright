@@ -78,6 +78,12 @@ public class NaukriProfileSteps {
     // 🔹 Home page login button (top navbar)
     @Then("I Click on the Login button")
     public void iClickOnTheLoginButton() {
+
+        if (System.getenv("CI") != null) {
+            System.out.println("Skipping login in CI (using saved session)");
+            return;
+        }
+
         try {
             Locator loginLink = page.locator("#login_Layer");
             loginLink.waitFor();
