@@ -1,0 +1,57 @@
+name: Daily Naukri Profile Update
+
+on:
+  schedule:
+    - cron: '30 3 * * *'  # 9 AM IST
+  workflow_dispatch:
+
+jobs:
+  update-profile:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Java
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'adopt'
+
+    - name: Install Google Chrome
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y wget gnupg
+        wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | gpg --dearmor | sudo tee /usr/share/keyrings/google-linux.gpg > /dev/null
+        echo "deb [arch=amd64 signed-by=/usr/share/keyrings/google-linux.gpg] http://dl.google.com/linux/chrome/deb/ stable main" | sudo tee /etc/apt/sources.list.d/google.list
+        sudo apt-get update
+        sudo apt-get install -y google-chrome-stable
+
+    - name: Cache Maven dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.m2
+        key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+        restore-keys: ${{ runner.os }}-m2
+
+    - name: Run Maven tests
+      env:
+        NAUKRI_USERNAME: ${{ secrets.NAUKRI_USERNAME }}
+        NAUKRI_PASSWORD: ${{ secrets.NAUKRI_PASSWORD }}
+        BROWSER_HEADLESS: true
+      run: mvn clean test -Dtest=TestRunner
+
+    - name: Upload test results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: test-results
+        path: target/cucumber-reports/
+
+    - name: Upload screenshots
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: screenshots
+        path: screenshots/
