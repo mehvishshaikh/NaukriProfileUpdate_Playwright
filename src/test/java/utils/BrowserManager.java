@@ -30,9 +30,9 @@ public class BrowserManager {
 
     public Page initializeBrowser() {
         playwright = Playwright.create();
-
+        boolean isCI = System.getenv("CI") != null;
         BrowserType.LaunchOptions launchOptions = new BrowserType.LaunchOptions()
-                .setHeadless(configReader.isHeadlessBrowser())
+                .setHeadless(isCI || configReader.isHeadlessBrowser())
                 .setChannel("chrome")
                 .setSlowMo(100)
                 .setArgs(Arrays.asList(

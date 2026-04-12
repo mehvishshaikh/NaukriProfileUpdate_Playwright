@@ -84,7 +84,8 @@ public class ConfigReader {
      * Non-sensitive value - CAN have a default fallback
      */
     public boolean isHeadlessBrowser() {
-        return Boolean.parseBoolean(properties.getProperty("browser.headless", "false"));
+        String headless = System.getenv("BROWSER_HEADLESS");
+        return headless != null && headless.equalsIgnoreCase("true");
     }
 
     /**
